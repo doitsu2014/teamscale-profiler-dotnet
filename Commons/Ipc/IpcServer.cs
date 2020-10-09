@@ -24,7 +24,7 @@ namespace Cqse.Teamscale.Profiler.Commons.Ipc
 
         protected abstract void StartRequestHandler();
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             requestHandlerThread.Abort();
         }

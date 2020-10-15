@@ -25,5 +25,6 @@ namespace UploadDaemon.SymbolAnalysis
         /// empty report.
         /// </summary>
         Dictionary<string, FileCoverage> ConvertToLineCoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns);
+        Dictionary<string, FileCoverage> ConvertToLineCoverageAndUncoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns);
     }
 }

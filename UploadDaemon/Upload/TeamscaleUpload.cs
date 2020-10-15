@@ -143,5 +143,15 @@ namespace UploadDaemon.Upload
         {
             return (server.Url, server.Project, server.Partition);
         }
+
+        public Task<bool> UploadJacocoReportCoverageAsync(string originalTraceFilePath, string jacocoReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> UploadVisualStudioCoverageReportAsync(string originalTraceFilePath, string visualStudioCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

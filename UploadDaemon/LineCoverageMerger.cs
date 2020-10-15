@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UploadDaemon.SymbolAnalysis;
 using UploadDaemon.Upload;
 
@@ -106,7 +107,9 @@ namespace UploadDaemon
                     fileCoverage = new FileCoverage();
                     batch.LineCoverage[file] = fileCoverage;
                 }
+                fileCoverage.AssemblyName = lineCoverage[file].AssemblyName;
                 fileCoverage.CoveredLineRanges.UnionWith(lineCoverage[file].CoveredLineRanges);
+                fileCoverage.DetailLineRanges.UnionWith(lineCoverage[file].DetailLineRanges);
             }
         }
 

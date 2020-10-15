@@ -11,16 +11,32 @@ namespace UploadDaemon.SymbolAnalysis
     /// </summary>
     public class FileCoverage
     {
+        public string AssemblyName { get; set; }
+
         /// <summary>
         /// The ranges of inclusive start and end lines that are covered in the file.
         /// </summary>
         public HashSet<(uint, uint)> CoveredLineRanges { get; } = new HashSet<(uint, uint)>();
+        public HashSet<(bool isCovered, uint methodToken, uint lineStart, uint lineEnd)> DetailLineRanges { get; } = new HashSet<(bool isCovered, uint methodToken, uint lineStart, uint lineEnd)>();
+
+        public FileCoverage()
+        {
+        }
 
         public FileCoverage(params (uint, uint)[] lineRanges)
         {
             foreach ((uint, uint) range in lineRanges)
             {
                 CoveredLineRanges.Add(range);
+            }
+        }
+
+        public FileCoverage(params (bool isCovered, uint methodToken, uint lineStart, uint lineEnd)[] lineRanges)
+        {
+            foreach ((bool isCovered, uint methodToken, uint lineStart, uint lineEnd) range in lineRanges)
+            {
+                CoveredLineRanges.Add((range.lineStart, range.lineEnd));
+                DetailLineRanges.Add(range);
             }
         }
 

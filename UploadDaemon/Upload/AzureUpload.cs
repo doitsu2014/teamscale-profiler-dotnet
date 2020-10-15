@@ -159,5 +159,30 @@ namespace UploadDaemon.Upload
         {
             return storage;
         }
+
+        public async Task<bool> UploadVisualStudioCoverageReportAsync(string originalTraceFilePath, string visualStudioCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            try
+            {
+                CloudStorageAccount account = GetStorageAccount();
+                logger.Debug("Uploading visual-studio coverage report from {trace} to {azure}/{directory}/", originalTraceFilePath,
+                    account.FileStorageUri, storage.Directory);
+
+                CloudFileShare share = await GetOrCreateShareAsync(account);
+                CloudFileDirectory directory = await GetOrCreateTargetDirectoryAsync(share);
+                long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                await UploadTextAsync(visualStudioCoverageReport, $"{unixSeconds}.coveragexml", directory);
+                await UploadTextAsync(revisionOrTimestamp.ToRevisionFileContent(), $"{unixSeconds}.metadata", directory);
+
+                logger.Info("Successfully uploaded visual-studio coverage report from {trace} to {azure}/{directory}", originalTraceFilePath,
+                    account.FileStorageUri, storage.Directory);
+                return true;
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Upload of visual-studio coverage report from {trace} to Azure File Storage failed", originalTraceFilePath);
+                return false;
+            }
+        }
     }
 }

@@ -288,6 +288,11 @@ Inlined=1:33555646:100678050" },
                 { "file1.cs", fileCoverage }
             };
         }
+
+        Dictionary<string, FileCoverage> ILineCoverageSynthesizer.ConvertToLineCoverageAndUncoverage(ParsedTraceFile traceFile, string symbolDirectory, GlobPatternList assemblyPatterns)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
     /// <summary>

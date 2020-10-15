@@ -22,6 +22,15 @@ namespace UploadDaemon.SymbolAnalysis
         public class SourceLocation
         {
             /// <summary>
+            /// Method id
+            /// </summary>
+            public string AssemblyName { get; set; }
+            /// <summary>
+            /// Method id
+            /// </summary>
+            public uint MethodToken { get; set; }
+
+            /// <summary>
             ///  The source file path. May be null when the PDB contains no source file path.
             /// </summary>
             public string SourceFile { get; set; }
@@ -94,7 +103,27 @@ namespace UploadDaemon.SymbolAnalysis
             {
                 return null;
             }
+            location.AssemblyName = assemblyName;
+            location.MethodToken = methodToken;
             return location;
+        }
+
+        public SourceLocation[] DetectUnCoverageLines(string assemblyName, (uint startLine, uint endLine)[] listRange)
+        {
+            if (!mappings.TryGetValue(assemblyName, out Dictionary<uint, SourceLocation> assemblyMappings))
+            {
+                return null;
+            }
+            
+            return assemblyMappings
+                    .Where(am => !string.IsNullOrEmpty(am.Value.SourceFile) && !listRange.Any(r => r.startLine == am.Value.StartLine && r.endLine == am.Value.EndLine))
+                    .Select(am => 
+                    {
+                        am.Value.MethodToken = am.Key;
+                        am.Value.AssemblyName = assemblyName;
+                        return am.Value;                    
+                    })
+                    .ToArray();
         }
 
         /// <summary>

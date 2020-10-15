@@ -86,5 +86,25 @@ namespace UploadDaemon.Upload
         {
             return targetDirectory;
         }
+
+        public Task<bool> UploadVisualStudioCoverageReportAsync(string originalTraceFilePath, string visualStudioCoverageReport, RevisionFileUtils.RevisionOrTimestamp revisionOrTimestamp)
+        {
+            long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            string filePath = Path.Combine(targetDirectory, $"{unixSeconds}.coveragexml");
+            string metadataFilePath = Path.Combine(targetDirectory, $"{unixSeconds}.metadata");
+
+            try
+            {
+                fileSystem.File.WriteAllText(filePath, visualStudioCoverageReport);
+                fileSystem.File.WriteAllText(metadataFilePath, revisionOrTimestamp.ToRevisionFileContent());
+                return Task.FromResult(true);
+            }
+            catch (Exception e)
+            {
+                logger.Error(e, "Failed to upload visual-studio coverage report from {trace} to {targetDirectory}. Will retry later",
+                    originalTraceFilePath, targetDirectory);
+                return Task.FromResult(false);
+            }
+        }
     }
 }

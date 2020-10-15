@@ -110,114 +110,79 @@ namespace UploadDaemon.SymbolAnalysis
 
         public static string ConvertToVisualStudioCoverageReport(Dictionary<string, FileCoverage> lineCoverage)
         {
-            var mappingSourceIds = lineCoverage.ToList().Select((x, i) => (x.Key, i)).ToDictionary(x => x.Key, x => (uint)(x.i + 1));
-            XmlSerializer s = new XmlSerializer(typeof(CoverageDSPriv));
-            var report = new CoverageDSPriv();
-            var processName = Process.GetCurrentProcess().ProcessName;
-            var items = new object[]
+            var report = new VsCoverageResults()
             {
-                new CoverageDSPrivModule()
+                modules = lineCoverage
+                       .GroupBy(e => e.Value.AssemblyName)
+                       .Select((g) =>
+                       {
+                           var mappingSourceIds = g.Select((gv, i) => new resultsModuleSource_file()
+                           {
+                               id = i,
+                               checksum = string.Empty,
+                               checksum_type = string.Empty,
+                               path = gv.Key
+                           }).ToDictionary(x => x.path, x => x);
+
+                           return new resultsModule()
+                           {
+                               blocks_covered = 0,
+                               blocks_not_covered = 0,
+                               block_coverage = 0,
+                               lines_covered = 0,
+                               lines_not_covered = 0,
+                               line_coverage = 0,
+                               lines_partially_covered = 0,
+                               id = Guid.NewGuid().ToString(),
+                               name = g.Key,
+                               path = g.Key,
+                               functions = g.Select(gv =>
+                               {
+                                   return gv.Value.DetailLineRanges.Select(gvvdlr => new resultsModuleFunction()
+                                   {
+                                       blocks_covered = 0,
+                                       blocks_not_covered = 0,
+                                       block_coverage = 0,
+                                       lines_covered = 0,
+                                       lines_not_covered = 0,
+                                       line_coverage = 0,
+                                       lines_partially_covered = 0,
+                                       id = gvvdlr.methodToken,
+                                       name = gvvdlr.methodToken.ToString(),
+                                       token = string.Format("0x{0:x}", gvvdlr.methodToken),
+                                       type_name = string.Empty,
+                                       ranges = Enumerable.Range((int)gvvdlr.lineStart, (int)(gvvdlr.lineEnd - gvvdlr.lineStart + 1))
+                                           .Select(ln => new resultsModuleFunctionRange()
+                                           {
+                                               end_line = (ushort)ln,
+                                               start_line = (ushort)ln,
+                                               covered = gvvdlr.isCovered ? "yes" : "no",
+                                               start_column = 0,
+                                               end_column = 0,
+                                               source_id = mappingSourceIds[gv.Key].id
+                                           }).ToArray()
+                                   });
+                               }).SelectMany(x => x).ToArray(),
+                               source_files = mappingSourceIds.Select((e) => e.Value).ToArray()
+                           };
+                       }).ToArray()
+            };
+
+            foreach (var resultModule in report.modules)
+            {
+                foreach (var function in resultModule.functions)
                 {
-                    ModuleName = processName,
-                    BlocksCoveredSpecified = true,
-                    BlocksCovered = 0,
-                    BlocksNotCoveredSpecified = true,
-                    BlocksNotCovered = 0,
-                    LinesCoveredSpecified = true,
-                    LinesCovered = 0,
-                    LinesNotCoveredSpecified = true,
-                    LinesNotCovered = 0,
-                    LinesPartiallyCoveredSpecified = true,
-                    LinesPartiallyCovered = 0,
-                    ImageSize = 0,
-                    NamespaceTable = lineCoverage
-                    .GroupBy(e => e.Value.AssemblyName)
-                    .Select((g) =>
-                    {
-                        return new CoverageDSPrivModuleNamespaceTable()
-                        {
-                            BlocksCoveredSpecified = true,
-                            BlocksCovered = 0,
-                            BlocksNotCoveredSpecified = true,
-                            BlocksNotCovered = 0,
-                            LinesCoveredSpecified = true,
-                            LinesCovered = 0,
-                            LinesNotCoveredSpecified = true,
-                            LinesNotCovered = 0,
-                            LinesPartiallyCoveredSpecified = true,
-                            LinesPartiallyCovered = 0,
-                            ModuleName = $"{processName}",
-                            NamespaceName = g.Key,
-                            NamespaceKeyName = g.Key,
-                            Class = g.Select(gv =>
-                            {
-                                var classNamePaths = gv.Key.Split('\\');
-                                var className = classNamePaths.Last();
-                                return new CoverageDSPrivModuleNamespaceTableClass()
-                                {
-                                    BlocksCoveredSpecified = true,
-                                    BlocksCovered = 0,
-                                    BlocksNotCoveredSpecified = true,
-                                    BlocksNotCovered = 0,
-                                    LinesCoveredSpecified = true,
-                                    LinesCovered = 0,
-                                    LinesNotCoveredSpecified = true,
-                                    LinesNotCovered = 0,
-                                    LinesPartiallyCoveredSpecified = true,
-                                    LinesPartiallyCovered = 0,
-                                    ClassName = className,
-                                    ClassKeyName = string.Empty,
-                                    Method = gv.Value.DetailLineRanges.Select(cvl =>
-                                    {
-                                        return new CoverageDSPrivModuleNamespaceTableClassMethod()
-                                        {
-                                            BlocksCoveredSpecified = true,
-                                            BlocksCovered = 0,
-                                            BlocksNotCoveredSpecified = true,
-                                            BlocksNotCovered = 0,
-                                            LinesCoveredSpecified = true,
-                                            LinesCovered = 0,
-                                            LinesNotCoveredSpecified = true,
-                                            LinesNotCovered = 0,
-                                            LinesPartiallyCoveredSpecified = true,
-                                            LinesPartiallyCovered = 0,
-                                            MethodName = cvl.methodToken.ToString(),
-                                            MethodKeyName = cvl.methodToken.ToString(),
-                                            Lines = Enumerable.Range((int)cvl.lineStart, (int)(cvl.lineEnd - cvl.lineStart + 1))
-                                                .Select(ln => new CoverageDSPrivModuleNamespaceTableClassMethodLines()
-                                                {
-                                                    LnStart = (uint)ln,
-                                                    LnEnd = (uint)ln,
-                                                    Coverage = cvl.isCovered ? (uint)0 : (uint)2,
-                                                    SourceFileID = mappingSourceIds[gv.Key]
-                                                }).ToArray()
-                                        };
-                                    }).ToArray()
-                                };
-                            }).ToArray()
-                        };
-                    }).ToArray()
+                    function.lines_covered = function.ranges.Count(r => r.covered == "yes");
+                    function.lines_not_covered = function.ranges.Count(r => r.covered == "no");
+                    function.line_coverage = (decimal)function.lines_covered / (decimal)(function.lines_covered + function.lines_partially_covered + function.lines_not_covered) * 100;
                 }
-            }.ToList();
-            items.AddRange(mappingSourceIds.Select(x => new CoverageDSPrivSourceFileNames()
-            {
-                SourceFileName = x.Key,
-                SourceFileID = x.Value
-            }));
-            report.Items = items.ToArray();
 
-            var emptyNamespaces = new XmlSerializerNamespaces(new[] { XmlQualifiedName.Empty });
-            var serializer = new XmlSerializer(report.GetType());
-            var settings = new XmlWriterSettings();
-            settings.Indent = true;
-            settings.OmitXmlDeclaration = true;
-
-            using (var stream = new StringWriter())
-            using (var writer = XmlWriter.Create(stream, settings))
-            {
-                serializer.Serialize(writer, report, emptyNamespaces);
-                return stream.ToString();
+                resultModule.lines_covered = resultModule.functions.Sum(f => f.lines_covered);
+                resultModule.lines_not_covered = resultModule.functions.Sum(f => f.lines_not_covered);
+                resultModule.line_coverage = (decimal)resultModule.lines_covered / (decimal)(resultModule.lines_covered + resultModule.lines_partially_covered + resultModule.lines_not_covered) * 100;
             }
+
+            return Helper.XmlSerialize(report);
         }
 
         public static string ConvertToJacocoGenericReport(Dictionary<string, FileCoverage> lineCoverage)

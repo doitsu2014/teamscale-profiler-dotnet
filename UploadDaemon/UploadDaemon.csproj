@@ -151,6 +151,7 @@
     <Compile Include="Archiving\IArchive.cs" />
     <Compile Include="Archiving\IArchiveFactory.cs" />
     <Compile Include="Archiving\IDateTimeProvider.cs" />
+    <Compile Include="Helper.cs" />
     <Compile Include="LineCoverageMerger.cs" />
     <Compile Include="MessageFormatter.cs" />
     <Compile Include="SymbolAnalysis\CloverReport.cs" />
